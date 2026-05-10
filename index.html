@@ -1,0 +1,607 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Gaurav's Birthday Jeopardy</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --jeop-blue: #060CE9;
+    --jeop-blue-dark: #03066f;
+    --jeop-blue-deeper: #02034a;
+    --jeop-gold: #ffcc00;
+    --jeop-gold-bright: #ffd966;
+    --ink: #ffffff;
+    --shadow: 0 6px 0 rgba(0,0,0,0.35);
+    --tile-shadow: 0 4px 0 #000, 0 0 0 2px #000 inset;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: 'Inter', system-ui, sans-serif;
+    background: radial-gradient(ellipse at top, var(--jeop-blue-dark) 0%, #000 80%);
+    color: var(--ink);
+    min-height: 100vh;
+    min-height: 100svh;
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+  }
+  .serif { font-family: 'Playfair Display', Georgia, serif; }
+
+  /* ---------- Screens ---------- */
+  .screen { display: none; min-height: 100vh; min-height: 100svh; }
+  .screen.active { display: flex; }
+
+  /* ---------- Title ---------- */
+  #screen-title {
+    flex-direction: column; align-items: center; justify-content: center;
+    text-align: center; padding: 24px;
+    background:
+      radial-gradient(ellipse at center, rgba(255,204,0,0.10), transparent 60%),
+      radial-gradient(ellipse at top, var(--jeop-blue-dark) 0%, #000 80%);
+  }
+  #screen-title .hbd {
+    font-family: 'Playfair Display', serif;
+    color: var(--jeop-gold);
+    font-weight: 700; font-style: italic;
+    font-size: clamp(20px, 4vw, 32px);
+    letter-spacing: 0.04em;
+    margin-bottom: 12px;
+    text-shadow: 0 2px 0 rgba(0,0,0,0.6);
+  }
+  #screen-title h1 {
+    font-family: 'Playfair Display', serif;
+    font-weight: 900;
+    font-size: clamp(44px, 9vw, 112px);
+    line-height: 0.95;
+    margin: 0 0 18px;
+    color: var(--jeop-gold);
+    text-shadow:
+      0 4px 0 #000,
+      0 8px 24px rgba(0,0,0,0.6);
+    letter-spacing: 0.01em;
+  }
+  #screen-title .sub {
+    font-size: clamp(16px, 2.4vw, 22px);
+    max-width: 640px;
+    color: #f3f3f7;
+    opacity: 0.9;
+    margin: 0 0 36px;
+  }
+  .start-btn {
+    background: var(--jeop-gold);
+    color: var(--jeop-blue-deeper);
+    border: none;
+    font-family: 'Playfair Display', serif;
+    font-weight: 900;
+    font-size: clamp(20px, 3vw, 28px);
+    padding: 16px 42px;
+    border-radius: 8px;
+    cursor: pointer;
+    box-shadow: 0 6px 0 #b88a00, 0 12px 24px rgba(0,0,0,0.4);
+    transition: transform 80ms ease, box-shadow 80ms ease;
+    letter-spacing: 0.04em;
+  }
+  .start-btn:hover { transform: translateY(-1px); }
+  .start-btn:active { transform: translateY(4px); box-shadow: 0 2px 0 #b88a00; }
+
+  /* ---------- Board ---------- */
+  #screen-board {
+    flex-direction: column;
+    padding: 12px clamp(8px, 2vw, 24px) 24px;
+  }
+  .topbar {
+    display: flex; justify-content: space-between; align-items: center;
+    gap: 12px; padding: 6px 4px 14px;
+  }
+  .chip {
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,204,0,0.4);
+    color: var(--jeop-gold);
+    font-weight: 800;
+    font-size: clamp(13px, 1.6vw, 16px);
+    padding: 8px 14px;
+    border-radius: 999px;
+    letter-spacing: 0.05em;
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+  }
+  .board {
+    flex: 1;
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    grid-auto-rows: 1fr;
+    gap: clamp(6px, 1vw, 12px);
+    max-width: 1400px;
+    width: 100%;
+    margin: 0 auto;
+  }
+  .cat-head {
+    background: linear-gradient(180deg, var(--jeop-blue) 0%, var(--jeop-blue-dark) 100%);
+    color: var(--ink);
+    font-family: 'Playfair Display', serif;
+    font-weight: 900;
+    text-align: center;
+    padding: 12px 6px;
+    border-radius: 6px;
+    font-size: clamp(12px, 1.5vw, 22px);
+    line-height: 1.1;
+    display: flex; align-items: center; justify-content: center;
+    text-shadow: 1px 1px 0 #000;
+    box-shadow: var(--tile-shadow);
+    min-height: 60px;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+  }
+  .tile {
+    background: linear-gradient(180deg, var(--jeop-blue) 0%, var(--jeop-blue-dark) 100%);
+    color: var(--jeop-gold);
+    font-family: 'Playfair Display', serif;
+    font-weight: 900;
+    font-size: clamp(20px, 3.6vw, 44px);
+    text-align: center;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    padding: 12px;
+    box-shadow: var(--tile-shadow);
+    text-shadow: 2px 2px 0 #000, 0 0 12px rgba(255,204,0,0.2);
+    display: flex; align-items: center; justify-content: center;
+    aspect-ratio: 5/3;
+    transition: transform 120ms ease, filter 120ms ease, opacity 200ms ease;
+    font-variant-numeric: tabular-nums;
+  }
+  .tile:hover:not(.used) { transform: translateY(-2px); filter: brightness(1.12); }
+  .tile:active:not(.used) { transform: translateY(2px); }
+  .tile.used {
+    opacity: 0.18;
+    cursor: default;
+    pointer-events: none;
+    color: transparent;
+    text-shadow: none;
+  }
+
+  /* ---------- Clue / Answer ---------- */
+  #screen-clue {
+    flex-direction: column;
+    background: #000;
+    padding: 0;
+    position: relative;
+    overflow: hidden;
+  }
+  .clue-topbar {
+    position: absolute; top: 0; left: 0; right: 0;
+    padding: 12px clamp(12px, 2vw, 20px);
+    display: flex; justify-content: space-between; align-items: center;
+    z-index: 3;
+    background: linear-gradient(180deg, rgba(0,0,0,0.55), transparent);
+  }
+  .back-btn {
+    background: rgba(0,0,0,0.55);
+    color: #fff; border: 1px solid rgba(255,255,255,0.3);
+    padding: 8px 14px; border-radius: 999px;
+    cursor: pointer; font-size: 14px; font-weight: 600;
+  }
+  .back-btn:hover { background: rgba(0,0,0,0.75); }
+  .tile-meta {
+    font-family: 'Playfair Display', serif;
+    color: var(--jeop-gold); font-weight: 800;
+    font-size: clamp(14px, 1.8vw, 18px);
+    text-shadow: 1px 1px 0 #000;
+    text-align: right; line-height: 1.2;
+  }
+  .tile-meta .val { font-size: 1.4em; }
+
+  .photo-wrap {
+    flex: 1;
+    display: flex; align-items: center; justify-content: center;
+    padding: 60px 12px 0;
+    min-height: 0;
+  }
+  .photo-wrap img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    border-radius: 6px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.6);
+  }
+  .band {
+    background: linear-gradient(180deg, rgba(2,3,74,0.92) 0%, rgba(0,0,0,0.96) 100%);
+    border-top: 2px solid var(--jeop-gold);
+    padding: clamp(16px, 2.4vw, 28px) clamp(16px, 4vw, 48px) clamp(20px, 3vw, 32px);
+    text-align: center;
+  }
+  .band .text {
+    font-family: 'Playfair Display', serif;
+    font-weight: 700;
+    font-size: clamp(20px, 3vw, 36px);
+    line-height: 1.25;
+    color: #fff;
+    text-shadow: 2px 2px 0 #000;
+    max-width: 1100px;
+    margin: 0 auto 18px;
+  }
+  .band .text.answer {
+    color: var(--jeop-gold);
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  .band-buttons {
+    display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;
+  }
+  .band-btn {
+    font-family: 'Inter', sans-serif;
+    font-weight: 800;
+    font-size: clamp(14px, 1.8vw, 18px);
+    padding: 12px 24px;
+    border-radius: 999px;
+    border: none;
+    cursor: pointer;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    transition: transform 80ms ease, filter 80ms ease;
+  }
+  .band-btn:hover { filter: brightness(1.1); transform: translateY(-1px); }
+  .band-btn:active { transform: translateY(2px); }
+  .band-btn.reveal { background: var(--jeop-gold); color: var(--jeop-blue-deeper); }
+  .band-btn.got    { background: #1ec96b; color: #00250f; }
+  .band-btn.miss   { background: #444; color: #fff; }
+
+  /* ---------- Final ---------- */
+  #screen-final {
+    flex-direction: column; align-items: center; justify-content: center;
+    padding: 24px; text-align: center;
+  }
+  #screen-final .label {
+    font-family: 'Playfair Display', serif;
+    color: var(--jeop-gold);
+    font-size: clamp(18px, 2.4vw, 24px);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+  #screen-final .score-big {
+    font-family: 'Playfair Display', serif;
+    font-weight: 900;
+    color: var(--jeop-gold);
+    font-size: clamp(56px, 14vw, 160px);
+    line-height: 1;
+    text-shadow: 0 6px 0 #000, 0 12px 30px rgba(0,0,0,0.6);
+    font-variant-numeric: tabular-nums;
+  }
+  #screen-final .score-of {
+    font-family: 'Playfair Display', serif;
+    color: #fff; opacity: 0.7;
+    font-size: clamp(18px, 2.4vw, 26px);
+    margin-top: 6px;
+  }
+  #screen-final .tier {
+    font-family: 'Playfair Display', serif;
+    font-style: italic;
+    color: #fff;
+    font-size: clamp(20px, 3.2vw, 34px);
+    margin: 28px 0 36px;
+    max-width: 700px;
+  }
+
+  /* ---------- Confetti ---------- */
+  .confetti {
+    position: fixed; inset: 0; pointer-events: none; z-index: 10; overflow: hidden;
+  }
+  .confetti span {
+    position: absolute; top: -20px; width: 10px; height: 14px;
+    background: var(--jeop-gold); opacity: 0.9;
+    animation: fall linear forwards;
+  }
+  @keyframes fall {
+    to { transform: translateY(110vh) rotate(720deg); opacity: 0.85; }
+  }
+
+  /* ---------- Transitions ---------- */
+  .fade { animation: fadein 200ms ease; }
+  @keyframes fadein { from { opacity: 0 } to { opacity: 1 } }
+
+  /* ---------- Mobile ---------- */
+  @media (max-width: 640px) {
+    .board { gap: 4px; }
+    .cat-head { font-size: 10px; padding: 8px 3px; min-height: 50px; }
+    .tile { font-size: 16px; padding: 6px; aspect-ratio: 1.4/1; }
+    .photo-wrap { padding-top: 56px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ============ TITLE ============ -->
+<section id="screen-title" class="screen active">
+  <div class="hbd">Happy Birthday, Gaurav</div>
+  <h1 class="serif">Gaurav's Birthday<br/>Jeopardy</h1>
+  <p class="sub">20 clues. $5,000 on the line. It's all about you.</p>
+  <button class="start-btn" onclick="startGame()">Let's Play</button>
+</section>
+
+<!-- ============ BOARD ============ -->
+<section id="screen-board" class="screen">
+  <div class="topbar">
+    <div class="chip" id="progress-chip">0 / 20 clues</div>
+    <div class="chip" id="score-chip">$0 / $5,000</div>
+  </div>
+  <div class="board" id="board"></div>
+</section>
+
+<!-- ============ CLUE ============ -->
+<section id="screen-clue" class="screen">
+  <div class="clue-topbar">
+    <button class="back-btn" onclick="backToBoard()">← Back to board</button>
+    <div class="tile-meta">
+      <div id="clue-category"></div>
+      <div class="val" id="clue-value"></div>
+    </div>
+  </div>
+  <div class="photo-wrap">
+    <img id="clue-photo" alt="" />
+  </div>
+  <div class="band">
+    <div class="text" id="clue-text"></div>
+    <div class="band-buttons" id="clue-buttons">
+      <button class="band-btn reveal" onclick="revealAnswer()">Reveal Answer</button>
+    </div>
+  </div>
+</section>
+
+<!-- ============ FINAL ============ -->
+<section id="screen-final" class="screen">
+  <div class="label">Final Score</div>
+  <div class="score-big" id="final-score">$0</div>
+  <div class="score-of">of $5,000</div>
+  <div class="tier serif" id="final-tier"></div>
+  <button class="start-btn" onclick="resetGame()">Play Again</button>
+</section>
+
+<script>
+/* ========== DATA ========== */
+const GAME = {
+  categories: [
+    {
+      name: "Kingdom of Gyaldem",
+      folder: "name-dat-gyaldem",
+      clues: [
+        { value: 100, photo: "g1.jpg", clue: "If she were a music genre she'd be reggaeton", answer: "REGA JHA" },
+        { value: 200, photo: "g2.jpg", clue: "She's got the luck, now",                       answer: "SHANZEY ALTAF" },
+        { value: 300, photo: "g3.jpg", clue: "I'm praying for her 🙏",                        answer: "POOJA LOHIT" },
+        { value: 400, photo: "g4.jpg", clue: "Her favorite time of the day is noon",          answer: "ILAYDA VERIZOGLU" },
+      ]
+    },
+    {
+      name: "Kaun, Man?",
+      folder: "name-dat-rando",
+      clues: [
+        { value: 100, photo: "ntr1.jpg", clue: "Nike has the swoosh, he's got the Hoosh", answer: "JAI BHALLA" },
+        { value: 200, photo: "ntr2.jpg", clue: "\"Belonging to Anil\", in Hindi",          answer: "NICHOLAS ANELKA" },
+        { value: 300, photo: "ntr3.jpg", clue: "The opposite of \"Happy Ass\"",            answer: "SAAD TEETI" },
+        { value: 400, photo: "ntr4.jpg", clue: "Echoes from the past?",                    answer: "(IMR+RAMZ)AN BHAI" },
+      ]
+    },
+    {
+      name: "Fit Faat",
+      folder: "fashion-police",
+      clues: [
+        { value: 100, photo: "f1.jpg", clue: "Heart, Spade, Diamond, ___?", answer: "CLUB FIT" },
+        { value: 200, photo: "f2.jpg", clue: "Basic in Besiktas",            answer: "TURKIYE FIT" },
+        { value: 300, photo: "f3.jpg", clue: "Thanda Thanda Cool Cool",      answer: "WINTER FIT" },
+        { value: 400, photo: "f4.jpg", clue: "If, eLSE",                     answer: "GRADUATION FIT" },
+      ]
+    },
+    {
+      name: "Gaurav's Got Latent",
+      folder: "talent-pool",
+      clues: [
+        { value: 100, photo: "t1.jpg", clue: "Qudrat ka karishma",                                                  answer: "CYCLE" },
+        { value: 200, photo: "t2.jpg", clue: "Sangeet Samraat",                                                      answer: "GUITAR" },
+        { value: 300, photo: "t3.jpg", clue: "Bollywood, Hollywood, Very Very Hollywood",                            answer: "FILMMAKING" },
+        { value: 400, photo: "t4.jpg", clue: "Sab Kuch Kho Kar, De ke Thokar, Barsha Chalein mast ho kar?",          answer: "POKER" },
+      ]
+    },
+    {
+      name: "Scene on Hai Jani",
+      folder: "iconic-setting",
+      clues: [
+        { value: 100, photo: "is1.jpg", clue: "Urchina Puran Singh",       answer: "ANADOLU HASTANESI" },
+        { value: 200, photo: "is2.jpg", clue: "Bambai Se Aaya Mera Dost",  answer: "LOLLAPALOOZA" },
+        { value: 300, photo: "is3.jpg", clue: "2 cabs, please",            answer: "TAXI TAXI" },
+        { value: 400, photo: "is4.jpg", clue: "God Tussi Great Ho",        answer: "HAGIA SOFIA" },
+      ]
+    },
+  ]
+};
+
+const TOTAL_TILES = 20;
+const PERFECT_SCORE = 5000;
+
+/* ========== STATE ========== */
+const state = {
+  usedTiles: new Set(),     // "ci-ti" e.g. "0-2"
+  score: 0,
+  current: null,            // {ci, ti}
+};
+
+/* ========== HELPERS ========== */
+const $ = sel => document.querySelector(sel);
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  const el = document.getElementById(id);
+  el.classList.add('active');
+  el.classList.remove('fade'); void el.offsetWidth; el.classList.add('fade');
+}
+function fmt(n) { return '$' + n.toLocaleString('en-US'); }
+function updateChips() {
+  $('#progress-chip').textContent = `${state.usedTiles.size} / ${TOTAL_TILES} clues`;
+  $('#score-chip').textContent    = `${fmt(state.score)} / ${fmt(PERFECT_SCORE)}`;
+}
+
+/* ========== BOARD ========== */
+function renderBoard() {
+  const board = $('#board');
+  board.innerHTML = '';
+  // headers
+  GAME.categories.forEach(cat => {
+    const h = document.createElement('div');
+    h.className = 'cat-head';
+    h.textContent = cat.name;
+    board.appendChild(h);
+  });
+  // 4 rows
+  for (let row = 0; row < 4; row++) {
+    GAME.categories.forEach((cat, ci) => {
+      const clue = cat.clues[row];
+      const key = `${ci}-${row}`;
+      const btn = document.createElement('button');
+      btn.className = 'tile' + (state.usedTiles.has(key) ? ' used' : '');
+      btn.textContent = fmt(clue.value);
+      btn.setAttribute('aria-label', `${cat.name}, ${fmt(clue.value)}`);
+      if (!state.usedTiles.has(key)) {
+        btn.onclick = () => openClue(ci, row);
+      }
+      board.appendChild(btn);
+    });
+  }
+  updateChips();
+}
+
+/* ========== CLUE / ANSWER ========== */
+function openClue(ci, ti) {
+  state.current = { ci, ti };
+  const cat = GAME.categories[ci];
+  const c = cat.clues[ti];
+  $('#clue-category').textContent = cat.name;
+  $('#clue-value').textContent = fmt(c.value);
+  const img = $('#clue-photo');
+  img.src = `./assets/${cat.folder}/${c.photo}`;
+  img.alt = cat.name;
+  const text = $('#clue-text');
+  text.classList.remove('answer');
+  text.textContent = c.clue;
+  $('#clue-buttons').innerHTML =
+    '<button class="band-btn reveal" onclick="revealAnswer()">Reveal Answer</button>';
+  showScreen('screen-clue');
+}
+
+function revealAnswer() {
+  if (!state.current) return;
+  const { ci, ti } = state.current;
+  const c = GAME.categories[ci].clues[ti];
+  const text = $('#clue-text');
+  text.classList.add('answer');
+  text.textContent = c.answer;
+  $('#clue-buttons').innerHTML =
+    '<button class="band-btn got"  onclick="markTile(true)">✓ Got it</button>' +
+    '<button class="band-btn miss" onclick="markTile(false)">✗ Missed it</button>';
+}
+
+function markTile(correct) {
+  if (!state.current) return;
+  const { ci, ti } = state.current;
+  const key = `${ci}-${ti}`;
+  state.usedTiles.add(key);
+  if (correct) {
+    state.score += GAME.categories[ci].clues[ti].value;
+    burstConfetti(40);
+  }
+  state.current = null;
+  if (state.usedTiles.size >= TOTAL_TILES) {
+    showFinal();
+  } else {
+    renderBoard();
+    showScreen('screen-board');
+  }
+}
+
+function backToBoard() {
+  state.current = null;
+  showScreen('screen-board');
+}
+
+/* ========== KEYBOARD ========== */
+document.addEventListener('keydown', e => {
+  const onClue = $('#screen-clue').classList.contains('active');
+  if (!onClue) return;
+  if (e.key === 'Escape') backToBoard();
+  if (e.key === ' ' || e.key === 'Enter') {
+    e.preventDefault();
+    const showingAnswer = $('#clue-text').classList.contains('answer');
+    if (!showingAnswer) revealAnswer();
+  }
+  if (e.key === 'ArrowRight' || e.key.toLowerCase() === 'y') {
+    if ($('#clue-text').classList.contains('answer')) markTile(true);
+  }
+  if (e.key === 'ArrowLeft' || e.key.toLowerCase() === 'n') {
+    if ($('#clue-text').classList.contains('answer')) markTile(false);
+  }
+});
+
+/* ========== FINAL ========== */
+function tierFor(score) {
+  if (score >= 5000) return "Maharaja of Self-Awareness";
+  if (score >= 4000) return "Pretty solid memory, gyaldem king";
+  if (score >= 3000) return "Mid";
+  if (score >= 2000) return "You need to call your friends more";
+  return "Who even are you";
+}
+function showFinal() {
+  $('#final-score').textContent = fmt(state.score);
+  $('#final-tier').textContent  = tierFor(state.score);
+  showScreen('screen-final');
+  burstConfetti(state.score >= 4000 ? 200 : 80);
+}
+
+/* ========== CONFETTI ========== */
+function burstConfetti(count = 60) {
+  const wrap = document.createElement('div');
+  wrap.className = 'confetti';
+  const colors = ['#ffcc00', '#ffffff', '#5b6bff', '#1ec96b', '#ff5577'];
+  for (let i = 0; i < count; i++) {
+    const s = document.createElement('span');
+    s.style.left = Math.random() * 100 + 'vw';
+    s.style.background = colors[Math.floor(Math.random() * colors.length)];
+    s.style.animationDuration = (1.6 + Math.random() * 1.8) + 's';
+    s.style.animationDelay = (Math.random() * 0.4) + 's';
+    s.style.transform = `rotate(${Math.random() * 360}deg)`;
+    s.style.width = (6 + Math.random() * 8) + 'px';
+    s.style.height = (10 + Math.random() * 8) + 'px';
+    wrap.appendChild(s);
+  }
+  document.body.appendChild(wrap);
+  setTimeout(() => wrap.remove(), 4000);
+}
+
+/* ========== GAME LIFECYCLE ========== */
+function startGame() {
+  preloadImages();
+  renderBoard();
+  showScreen('screen-board');
+}
+function resetGame() {
+  state.usedTiles.clear();
+  state.score = 0;
+  state.current = null;
+  renderBoard();
+  showScreen('screen-title');
+}
+function preloadImages() {
+  GAME.categories.forEach(cat => {
+    cat.clues.forEach(c => {
+      const img = new Image();
+      img.src = `./assets/${cat.folder}/${c.photo}`;
+    });
+  });
+}
+
+/* warm preload on title screen so first tile is instant */
+window.addEventListener('load', preloadImages);
+</script>
+</body>
+</html>
