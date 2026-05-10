@@ -167,17 +167,21 @@
   /* ---------- Clue / Answer ---------- */
   #screen-clue {
     flex-direction: column;
-    background: #000;
+    background: var(--jeop-blue-deeper);
     padding: 0;
     position: relative;
     overflow: hidden;
+    height: 100vh;
+    height: 100svh;
+    max-height: 100vh;
+    max-height: 100svh;
   }
   .clue-topbar {
-    position: absolute; top: 0; left: 0; right: 0;
+    flex: 0 0 auto;
     padding: 12px clamp(12px, 2vw, 20px);
     display: flex; justify-content: space-between; align-items: center;
     z-index: 3;
-    background: linear-gradient(180deg, rgba(0,0,0,0.55), transparent);
+    background: linear-gradient(180deg, rgba(0,0,0,0.45), transparent);
   }
   .back-btn {
     background: rgba(0,0,0,0.55);
@@ -195,23 +199,50 @@
   }
   .tile-meta .val { font-size: 1.4em; }
 
-  .photo-wrap {
-    flex: 1;
+  /* Phase 1: big clue card */
+  .clue-card {
+    flex: 1 1 auto;
     display: flex; align-items: center; justify-content: center;
-    padding: 60px 12px 0;
+    padding: clamp(16px, 4vw, 48px);
     min-height: 0;
+    background:
+      radial-gradient(ellipse at center, rgba(255,204,0,0.06), transparent 70%),
+      linear-gradient(180deg, var(--jeop-blue) 0%, var(--jeop-blue-dark) 100%);
+    text-align: center;
   }
-  .photo-wrap img {
+  .clue-card .clue-card-text {
+    font-family: 'Playfair Display', serif;
+    font-weight: 700;
+    font-size: clamp(26px, 5.5vw, 64px);
+    line-height: 1.2;
+    color: #fff;
+    text-shadow: 3px 3px 0 #000, 0 8px 30px rgba(0,0,0,0.5);
+    max-width: 1100px;
+  }
+
+  /* Phase 2: photo + answer */
+  .photo-stage {
+    flex: 1 1 auto;
+    display: flex; align-items: center; justify-content: center;
+    padding: clamp(8px, 1.5vw, 20px);
+    min-height: 0;
+    background: #000;
+  }
+  .photo-stage img {
+    display: block;
     max-width: 100%;
     max-height: 100%;
+    width: auto;
+    height: auto;
     object-fit: contain;
     border-radius: 6px;
     box-shadow: 0 10px 40px rgba(0,0,0,0.6);
   }
   .band {
+    flex: 0 0 auto;
     background: linear-gradient(180deg, rgba(2,3,74,0.92) 0%, rgba(0,0,0,0.96) 100%);
     border-top: 2px solid var(--jeop-gold);
-    padding: clamp(16px, 2.4vw, 28px) clamp(16px, 4vw, 48px) clamp(20px, 3vw, 32px);
+    padding: clamp(14px, 2vw, 24px) clamp(16px, 4vw, 48px) clamp(16px, 2.5vw, 28px);
     text-align: center;
   }
   .band .text {
@@ -222,7 +253,7 @@
     color: #fff;
     text-shadow: 2px 2px 0 #000;
     max-width: 1100px;
-    margin: 0 auto 18px;
+    margin: 0 auto 14px;
   }
   .band .text.answer {
     color: var(--jeop-gold);
@@ -342,13 +373,21 @@
       <div class="val" id="clue-value"></div>
     </div>
   </div>
-  <div class="photo-wrap">
+
+  <!-- Phase 1: clue only -->
+  <div class="clue-card" id="clue-card">
+    <div class="clue-card-text" id="clue-card-text"></div>
+  </div>
+
+  <!-- Phase 2: photo + answer -->
+  <div class="photo-stage" id="photo-stage" style="display:none">
     <img id="clue-photo" alt="" />
   </div>
+
   <div class="band">
-    <div class="text" id="clue-text"></div>
+    <div class="text" id="band-text" style="display:none"></div>
     <div class="band-buttons" id="clue-buttons">
-      <button class="band-btn reveal" onclick="revealAnswer()">Reveal Answer</button>
+      <button class="band-btn reveal" onclick="revealAnswer()">Reveal Photo</button>
     </div>
   </div>
 </section>
@@ -474,29 +513,47 @@ function renderBoard() {
 
 /* ========== CLUE / ANSWER ========== */
 function openClue(ci, ti) {
-  state.current = { ci, ti };
+  state.current = { ci, ti, revealed: false };
   const cat = GAME.categories[ci];
   const c = cat.clues[ti];
   $('#clue-category').textContent = cat.name;
   $('#clue-value').textContent = fmt(c.value);
-  const img = $('#clue-photo');
-  img.src = `./assets/${cat.folder}/${c.photo}`;
-  img.alt = cat.name;
-  const text = $('#clue-text');
-  text.classList.remove('answer');
-  text.textContent = c.clue;
+
+  // Phase 1: clue card visible, photo hidden
+  $('#clue-card').style.display = 'flex';
+  $('#clue-card-text').textContent = c.clue;
+  $('#photo-stage').style.display = 'none';
+  $('#clue-photo').src = '';
+
+  const bandText = $('#band-text');
+  bandText.style.display = 'none';
+  bandText.classList.remove('answer');
+  bandText.textContent = '';
+
   $('#clue-buttons').innerHTML =
-    '<button class="band-btn reveal" onclick="revealAnswer()">Reveal Answer</button>';
+    '<button class="band-btn reveal" onclick="revealAnswer()">Reveal Photo</button>';
   showScreen('screen-clue');
 }
 
 function revealAnswer() {
   if (!state.current) return;
   const { ci, ti } = state.current;
-  const c = GAME.categories[ci].clues[ti];
-  const text = $('#clue-text');
-  text.classList.add('answer');
-  text.textContent = c.answer;
+  const cat = GAME.categories[ci];
+  const c = cat.clues[ti];
+
+  // Phase 2: hide clue card, show photo + answer
+  $('#clue-card').style.display = 'none';
+  $('#photo-stage').style.display = 'flex';
+  const img = $('#clue-photo');
+  img.src = `./assets/${cat.folder}/${c.photo}`;
+  img.alt = cat.name;
+
+  const bandText = $('#band-text');
+  bandText.style.display = '';
+  bandText.classList.add('answer');
+  bandText.textContent = c.answer;
+
+  state.current.revealed = true;
   $('#clue-buttons').innerHTML =
     '<button class="band-btn got"  onclick="markTile(true)">✓ Got it</button>' +
     '<button class="band-btn miss" onclick="markTile(false)">✗ Missed it</button>';
@@ -528,19 +585,16 @@ function backToBoard() {
 /* ========== KEYBOARD ========== */
 document.addEventListener('keydown', e => {
   const onClue = $('#screen-clue').classList.contains('active');
-  if (!onClue) return;
-  if (e.key === 'Escape') backToBoard();
+  if (!onClue || !state.current) return;
+  const revealed = state.current.revealed;
+  if (e.key === 'Escape') { backToBoard(); return; }
   if (e.key === ' ' || e.key === 'Enter') {
     e.preventDefault();
-    const showingAnswer = $('#clue-text').classList.contains('answer');
-    if (!showingAnswer) revealAnswer();
+    if (!revealed) revealAnswer();
+    return;
   }
-  if (e.key === 'ArrowRight' || e.key.toLowerCase() === 'y') {
-    if ($('#clue-text').classList.contains('answer')) markTile(true);
-  }
-  if (e.key === 'ArrowLeft' || e.key.toLowerCase() === 'n') {
-    if ($('#clue-text').classList.contains('answer')) markTile(false);
-  }
+  if (revealed && (e.key === 'ArrowRight' || e.key.toLowerCase() === 'y')) markTile(true);
+  if (revealed && (e.key === 'ArrowLeft'  || e.key.toLowerCase() === 'n')) markTile(false);
 });
 
 /* ========== FINAL ========== */
